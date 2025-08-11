@@ -52,6 +52,12 @@ Edit `config/config.yaml`:
 - `output.tcp`: TCP JSON target host/port (optional)
 - `output.eki`: KUKA EKI XML-over-TCP target and XML shaping options
 
+### Documentation
+- Build/Install: docs/INSTALL.md
+- Usage: docs/USAGE.md
+- Development: docs/DEVELOPMENT.md
+- Troubleshooting: docs/TROUBLESHOOTING.md
+
 ### Systemd service (optional)
 ```
 sudo cp systemd/jetson-yolo-realsense-kuka.service /etc/systemd/system/
