@@ -1,0 +1,19 @@
+[Unit]
+Description=Jetson YOLOv8 + RealSense + KUKA UDP
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=god
+WorkingDirectory=/home/god/jetson-yolo-realsense-kuka
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/home/god/jetson-yolo-realsense-kuka/src
+ExecStart=/bin/bash -lc '/home/god/jetson-yolo-realsense-kuka/.venv/bin/python /home/god/jetson-yolo-realsense-kuka/src/main.py --config /home/god/jetson-yolo-realsense-kuka/config/config.yaml'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
+

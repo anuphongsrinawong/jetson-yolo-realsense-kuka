@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual env
+.venv/
+
+# Models and data
+models/
+data/
+
+# Logs
+run.log
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Editor/OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+

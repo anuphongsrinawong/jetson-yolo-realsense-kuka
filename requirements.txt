@@ -1,0 +1,10 @@
+# Jetson-friendly Python dependencies
+# Note: On Jetson, prefer apt for OpenCV and system libs. Torch needs Jetson-specific wheels.
+numpy>=1.24
+ultralytics==8.2.0
+PyYAML>=6.0
+
+# Do NOT install opencv-python wheels on Jetson; use apt: python3-opencv
+# RealSense: install pyrealsense2 via apt or from source matching kernel
+
+
