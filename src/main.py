@@ -111,6 +111,12 @@ def main():
     max_det = int(udp_cfg.get("max_detections", 20))
     max_fps = float(run_cfg.get("max_fps", 30))
 
+    # Latest JPEG output for UI
+    latest_jpeg_cfg = (config.get("output", {}).get("latest_jpeg", {}) if isinstance(config.get("output"), dict) else {})
+    save_latest = bool(latest_jpeg_cfg.get("enabled", False))
+    latest_path = str(latest_jpeg_cfg.get("path", Path(__file__).resolve().parents[1] / "output" / "latest.jpg"))
+    os.makedirs(os.path.dirname(latest_path), exist_ok=True)
+
     def handle_sigint(signum, frame):
         raise KeyboardInterrupt
 
@@ -182,6 +188,16 @@ def main():
                     tcp_sender.send(payload)
                 if eki_sender is not None:
                     eki_sender.send(payload)
+
+            # save latest jpeg for UI
+            if save_latest:
+                try:
+                    vis = color.copy()
+                    if draw_overlay:
+                        vis = draw_detections(vis, detections, show_depth=send_xyz)
+                    cv2.imwrite(latest_path, vis)
+                except Exception:
+                    pass
 
             # preview
             if preview_window:
