@@ -66,6 +66,21 @@ bash /home/god/jetson-yolo-realsense-kuka/scripts/run.sh
 - สคริปต์จะ `source` venv และตั้ง `PYTHONPATH` ให้มองเห็นแพ็คเกจจากระบบ เช่น `pyrealsense2`/OpenCV
 - ปรับ config ตามต้องการใน `config/config.yaml` ก่อนรัน
 
+### โหมด Single-shot (ถ่าย 1 รูปแล้วประมวลผล)
+- ตั้งค่าใน `config/config.yaml`:
+  - `runtime.mode: "single"`
+  - `runtime.warmup_frames: 3` จำนวนเฟรมอุ่นเครื่องเพื่อให้ค่าแสง/สตรีมนิ่ง ก่อนเก็บภาพจริง
+- หรือสั่งด้วย CLI (override คอนฟิก):
+```bash
+python /home/god/jetson-yolo-realsense-kuka/src/main.py \
+  --config /home/god/jetson-yolo-realsense-kuka/config/config.yaml \
+  --mode single
+```
+- พฤติกรรม:
+  - ระบบจะปล่อยผ่านเฟรมอุ่นเครื่องตาม `warmup_frames` จากนั้นประมวลผล 1 เฟรม แล้วส่งผลลัพธ์ผ่านเอาต์พุตที่เปิดไว้ (UDP/TCP/EKI)
+  - จะพิมพ์ payload JSON ของเฟรมเดียวลง stdout เพื่อใช้งานต่อทันทีได้
+  - หากเปิดพรีวิวไว้ จะโชว์ภาพครั้งเดียวก่อนจบกระบวนการ
+
 ### เอาต์พุตผลการตรวจจับ
 - UDP JSON: เปิดที่ `output.udp.enabled: true` และตั้ง `host`/`port`
 - TCP JSON: เปิดที่ `output.tcp.enabled: true` และตั้ง `host`/`port`
@@ -116,12 +131,6 @@ nc -ul 5005
 - เพิ่มเอาต์พุตใหม่ (เช่น MQTT): สร้างคลาส `send(payload: dict) -> None` ใน `src/output/` และเชื่อมใน `src/main.py` ตามตัวอย่าง UDP/TCP/EKI
 - ปรับการวาด/พรีวิว: แก้ฟังก์ชันที่ `src/utils/draw.py` หรือปิดพรีวิวผ่าน config
 - พิกัดหุ่นยนต์: ตั้ง `calibration.T_cam_to_robot` (4x4) เพื่อได้ `xyz_robot` สำหรับแต่ละ detection
-
-### แก้ปัญหาที่พบบ่อย (ย่อ)
-- ไม่พบ/นำเข้า `pyrealsense2` ไม่ได้: ติดตั้งผ่าน apt หรือคอมไพล์จากซอร์ส (มีขั้นตอนใน `scripts/setup_jetson.sh` และ `docs/INSTALL.md`)
-- OpenCV GUI ไม่มี DISPLAY: ระบบจะปิดพรีวิวอัตโนมัติ ตั้ง `output.preview_window: false` ได้
-- Torch ใช้ GPU ไม่ได้: ติดตั้งล้อให้ตรง JetPack/CUDA แล้วตรวจ `python -c "import torch; print(torch.cuda.is_available())"`
-- ปัญหาอื่นๆ ดู `docs/TROUBLESHOOTING.md`
 
 ---
 
