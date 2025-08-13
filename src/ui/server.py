@@ -9,7 +9,7 @@ import threading
 from pathlib import Path
 from typing import Optional
 
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, jsonify, render_template, request, send_file, Response
 import yaml
 
 PROJECT_ROOT = Path("/home/god/jetson-yolo-realsense-kuka").resolve()
@@ -108,6 +108,16 @@ manager = AppProcessManager()
 @app.get("/")
 def index():
 	return render_template("index.html")
+
+
+@app.get("/frame.jpg")
+def latest_frame():
+	cfg = _load_config_dict()
+	latest = cfg.get("output", {}).get("latest_jpeg", {}).get("path")
+	if latest and Path(latest).exists():
+		return send_file(latest, mimetype='image/jpeg', max_age=0)
+	# fallback 1x1 pixel
+	return Response(b"\xff\xd8\xff\xdb\x00C\x00" + b"\x08"*64 + b"\xff\xc0\x00\x11\x08\x00\x01\x00\x01\x03\x01\x11\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xc4\x00\x14\x10\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\xff\xd9", mimetype='image/jpeg')
 
 
 @app.get("/status")
