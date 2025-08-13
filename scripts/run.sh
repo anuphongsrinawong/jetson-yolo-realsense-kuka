@@ -10,4 +10,3 @@ export PYTHONPATH="/usr/lib/python3/dist-packages:/usr/local/lib/python3.10/dist
 
 python "$PROJECT_ROOT/src/main.py" --config "$PROJECT_ROOT/config/config.yaml"
 
-
