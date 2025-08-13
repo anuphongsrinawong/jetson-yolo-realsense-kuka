@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Jetson YOLO + RealSense UI</title>
+	<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+	<header>
+		<h1>Jetson YOLOv8 + RealSense Controller</h1>
+	</header>
+	<main>
+		<section class="controls">
+			<div class="status">
+				<span>สถานะ:</span>
+				<strong id="statusText">loading...</strong>
+				<button id="refreshBtn">รีเฟรชสถานะ</button>
+			</div>
+			<div class="actions">
+				<button id="startBtn">เริ่มโหมด Realtime</button>
+				<button id="stopBtn" class="danger">หยุด</button>
+				<button id="singleBtn" class="primary">ถ่าย 1 รูป (Single-shot)</button>
+			</div>
+		</section>
+
+		<section>
+			<h2>ผลลัพธ์ Single-shot</h2>
+			<pre id="singleOutput" class="code"></pre>
+		</section>
+
+		<section>
+			<h2>Log ล่าสุด</h2>
+			<pre id="logTail" class="log"></pre>
+		</section>
+	</main>
+
+	<script>
+	async function fetchStatus() {
+		try {
+			const r = await fetch('/status');
+			const j = await r.json();
+			document.getElementById('statusText').textContent = j.running ? 'กำลังรัน' : 'หยุดอยู่';
+		} catch (e) {
+			document.getElementById('statusText').textContent = 'ไม่สามารถอ่านสถานะ';
+		}
+	}
+
+	async function fetchLog() {
+		try {
+			const r = await fetch('/log?n=200');
+			const j = await r.json();
+			document.getElementById('logTail').textContent = j.log || '';
+		} catch (e) {
+			document.getElementById('logTail').textContent = '';
+		}
+	}
+
+	document.getElementById('refreshBtn').addEventListener('click', () => {
+		fetchStatus();
+		fetchLog();
+	});
+
+	document.getElementById('startBtn').addEventListener('click', async () => {
+		try {
+			const r = await fetch('/start', { method: 'POST' });
+			await r.json();
+			fetchStatus();
+			fetchLog();
+		} catch {}
+	});
+
+	document.getElementById('stopBtn').addEventListener('click', async () => {
+		try {
+			const r = await fetch('/stop', { method: 'POST' });
+			await r.json();
+			fetchStatus();
+			fetchLog();
+		} catch {}
+	});
+
+	document.getElementById('singleBtn').addEventListener('click', async () => {
+		const out = document.getElementById('singleOutput');
+		out.textContent = 'กำลังถ่ายและประมวลผล...';
+		try {
+			const r = await fetch('/single', { method: 'POST' });
+			const j = await r.json();
+			if (j.ok) {
+				out.textContent = JSON.stringify(j.payload, null, 2);
+			} else {
+				out.textContent = `Error: ${j.error || 'unknown'}`;
+			}
+			fetchLog();
+		} catch (e) {
+			out.textContent = 'เกิดข้อผิดพลาด';
+		}
+	});
+
+	// initial load
+	fetchStatus();
+	fetchLog();
+	</script>
+</body>
+</html>
