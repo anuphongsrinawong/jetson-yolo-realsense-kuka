@@ -10,7 +10,7 @@ runtime:
   visualize: false
   draw: true
   max_fps: 30
-  mode: "single"   # "realtime" or "single"
+  mode: "realtime"   # "realtime" or "single"
   warmup_frames: 3    # used when mode == "single"
 
 camera:
