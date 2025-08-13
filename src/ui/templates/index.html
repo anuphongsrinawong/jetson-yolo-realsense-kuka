@@ -78,12 +78,13 @@
 				<div class="lg:col-span-2 bg-gray-800 rounded-lg shadow-lg p-4">
 					<div class="flex items-center justify-between mb-2">
 						<h3 class="text-lg font-semibold text-white">ภาพจากกล้อง RealSense</h3>
-						<button id="btn_single_shot" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-1.5 px-3 rounded-md inline-flex items-center text-sm">
-							<i data-lucide="camera" class="h-4 w-4 mr-2"></i> ถ่าย 1 รูป (Single-shot)
-						</button>
+						<div class="flex gap-2">
+							<button id="btn_refresh_frame" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-1.5 px-3 rounded-md inline-flex items-center text-sm"><i data-lucide="rotate-ccw" class="h-4 w-4 mr-2"></i> รีเฟรชภาพ</button>
+							<button id="btn_single_shot" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-1.5 px-3 rounded-md inline-flex items-center text-sm"><i data-lucide="camera" class="h-4 w-4 mr-2"></i> ถ่าย 1 รูป</button>
+						</div>
 					</div>
 					<div class="aspect-video bg-black rounded-md flex items-center justify-center mb-4">
-						<img src="https://placehold.co/1280x720/000000/FFFFFF?text=Live+Camera+Feed" alt="Live Camera Feed" class="w-full h-full object-cover rounded-md">
+						<img id="img_frame" src="/frame.jpg" alt="Live Camera Feed" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/1280x720/000000/FFFFFF?text=No+Frame'">
 					</div>
 					<h3 class="text-lg font-semibold text-white mb-2">ผลการตรวจจับล่าสุด (Detections)</h3>
 					<div id="detections" class="h-48 bg-gray-900 rounded-md p-2 font-mono text-sm overflow-y-auto">
@@ -422,6 +423,8 @@
 			}
 		}
 
+		function refreshFrame(){const img=document.getElementById('img_frame');const u=new URL(img.src, window.location.origin);u.searchParams.set('t', Date.now().toString());img.src=u.toString();}
+
 		async function loadLog(auto=false) {
 			try {
 				const j = await api('/log?n=400');
@@ -441,7 +444,8 @@
 			showPage('dashboard');
 			loadStatus();
 			setInterval(loadStatus, 3000);
-			document.getElementById('btn_single_shot').addEventListener('click', doSingleShot);
+			document.getElementById('btn_single_shot').addEventListener('click', async() => { await doSingleShot(); refreshFrame(); });
+			document.getElementById('btn_refresh_frame').addEventListener('click', refreshFrame);
 			document.getElementById('btn_save_config').addEventListener('click', saveConfig);
 			document.getElementById('btn_restart_service').addEventListener('click', async () => { await api('/service/restart', { method: 'POST' }); loadServiceStatus(); });
 			document.getElementById('btn_download_log').addEventListener('click', () => { window.location = '/download/log'; });
