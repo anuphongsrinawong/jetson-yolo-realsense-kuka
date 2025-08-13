@@ -79,14 +79,13 @@
 					<div class="flex items-center justify-between mb-2">
 						<h3 class="text-lg font-semibold text-white">ภาพจากกล้อง RealSense</h3>
 						<div class="flex gap-2">
-							<a href="/stream.mjpg" target="_blank" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-1.5 px-3 rounded-md inline-flex items-center text-sm"><i data-lucide="play-circle" class="h-4 w-4 mr-2"></i> เปิดสตรีม</a>
 							<button id="btn_toggle_auto" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-1.5 px-3 rounded-md inline-flex items-center text-sm"><i data-lucide="timer" class="h-4 w-4 mr-2"></i> Auto-Refresh</button>
 							<button id="btn_refresh_frame" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-1.5 px-3 rounded-md inline-flex items-center text-sm"><i data-lucide="rotate-ccw" class="h-4 w-4 mr-2"></i> รีเฟรชภาพ</button>
 							<button id="btn_single_shot" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-1.5 px-3 rounded-md inline-flex items-center text-sm"><i data-lucide="camera" class="h-4 w-4 mr-2"></i> ถ่าย 1 รูป</button>
 						</div>
 					</div>
 					<div class="aspect-video bg-black rounded-md flex items-center justify-center mb-4">
-						<img id="img_frame" src="/frame.jpg" alt="Live Camera Feed" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/1280x720/000000/FFFFFF?text=No+Frame'">
+						<img id="img_frame" src="/stream.mjpg" alt="Live Camera Feed" class="w-full h-full object-cover rounded-md" onerror="this.src='https://placehold.co/1280x720/000000/FFFFFF?text=No+Stream'">
 					</div>
 					<h3 class="text-lg font-semibold text-white mb-2">ผลการตรวจจับล่าสุด (Detections)</h3>
 					<div id="detections" class="h-48 bg-gray-900 rounded-md p-2 font-mono text-sm overflow-y-auto">
