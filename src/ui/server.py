@@ -6,10 +6,11 @@ import signal
 import subprocess
 import sys
 import threading
+import time
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Iterator
 
-from flask import Flask, jsonify, render_template, request, send_file, Response
+from flask import Flask, jsonify, render_template, request, send_file, Response, stream_with_context
 import yaml
 
 PROJECT_ROOT = Path("/home/god/jetson-yolo-realsense-kuka").resolve()
@@ -39,6 +40,15 @@ def _load_config_dict() -> dict:
 def _save_config_dict(cfg: dict) -> None:
 	with open(CONFIG_YAML, "w") as f:
 		yaml.safe_dump(cfg, f, sort_keys=False, allow_unicode=True)
+
+
+def _placeholder_jpeg_bytes() -> bytes:
+	# 1x1 pixel JPEG (minimal) as fallback
+	return (b"\xff\xd8\xff\xdb\x00C\x00" + b"\x08"*64 +
+		b"\xff\xc0\x00\x11\x08\x00\x01\x00\x01\x03\x01\x11\x00\x02\x11\x01\x03\x11\x01" +
+		b"\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" +
+		b"\xff\xc4\x00\x14\x10\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" +
+		b"\xff\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\xff\xd9")
 
 
 class AppProcessManager:
@@ -116,8 +126,42 @@ def latest_frame():
 	latest = cfg.get("output", {}).get("latest_jpeg", {}).get("path")
 	if latest and Path(latest).exists():
 		return send_file(latest, mimetype='image/jpeg', max_age=0)
-	# fallback 1x1 pixel
-	return Response(b"\xff\xd8\xff\xdb\x00C\x00" + b"\x08"*64 + b"\xff\xc0\x00\x11\x08\x00\x01\x00\x01\x03\x01\x11\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xc4\x00\x14\x10\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\xff\xd9", mimetype='image/jpeg')
+	return Response(_placeholder_jpeg_bytes(), mimetype='image/jpeg')
+
+
+def _mjpeg_generator(img_path: Path, fps: float = 10.0) -> Iterator[bytes]:
+	boundary = b"--frame"
+	interval = 1.0 / max(1.0, fps)
+	last_mtime: float = 0.0
+	while True:
+		try:
+			if img_path.exists():
+				mtime = img_path.stat().st_mtime
+				if mtime != last_mtime:
+					last_mtime = mtime
+					data = img_path.read_bytes()
+				else:
+					data = img_path.read_bytes()
+			else:
+				data = _placeholder_jpeg_bytes()
+			yield (boundary + b"\r\n" +
+				b"Content-Type: image/jpeg\r\n" +
+				f"Content-Length: {len(data)}\r\n".encode('ascii') +
+				b"\r\n" + data + b"\r\n")
+		except Exception:
+			# On error, still push a placeholder frame to keep stream alive
+			data = _placeholder_jpeg_bytes()
+			yield (boundary + b"\r\nContent-Type: image/jpeg\r\n\r\n" + data + b"\r\n")
+		time.sleep(interval)
+
+
+@app.get("/stream.mjpg")
+def stream_mjpg():
+	cfg = _load_config_dict()
+	latest = cfg.get("output", {}).get("latest_jpeg", {}).get("path")
+	img_path = Path(latest) if latest else (PROJECT_ROOT / "output" / "latest.jpg")
+	gen = _mjpeg_generator(img_path, fps=10.0)
+	return Response(stream_with_context(gen), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @app.get("/status")
