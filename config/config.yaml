@@ -46,6 +46,9 @@ output:
     use_robot_xyz: true
     root_tag: "EKI"
     pretty: false
+  latest_jpeg:
+    enabled: true
+    path: "/home/god/jetson-yolo-realsense-kuka/output/latest.jpg"
 
 logging:
   level: "INFO"
