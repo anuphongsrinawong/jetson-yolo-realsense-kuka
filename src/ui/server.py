@@ -158,6 +158,17 @@ def service_action(action: str):
 		return jsonify({"ok": False, "error": str(e)}), 500
 
 
+@app.get("/service/status")
+def service_status():
+	try:
+		out = subprocess.check_output(["systemctl", "status", UNIT_NAME, "--no-pager"], stderr=subprocess.STDOUT, timeout=15)
+		return jsonify({"ok": True, "status": out.decode("utf-8", errors="ignore")})
+	except subprocess.CalledProcessError as e:
+		return jsonify({"ok": False, "status": e.output.decode("utf-8", errors="ignore")}), 200
+	except Exception as e:
+		return jsonify({"ok": False, "error": str(e)}), 500
+
+
 @app.get("/download/log")
 def download_log():
 	if not RUN_LOG.exists():
