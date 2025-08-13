@@ -79,6 +79,8 @@
 					<div class="flex items-center justify-between mb-2">
 						<h3 class="text-lg font-semibold text-white">ภาพจากกล้อง RealSense</h3>
 						<div class="flex gap-2">
+							<a href="/stream.mjpg" target="_blank" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-1.5 px-3 rounded-md inline-flex items-center text-sm"><i data-lucide="play-circle" class="h-4 w-4 mr-2"></i> เปิดสตรีม</a>
+							<button id="btn_toggle_auto" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-1.5 px-3 rounded-md inline-flex items-center text-sm"><i data-lucide="timer" class="h-4 w-4 mr-2"></i> Auto-Refresh</button>
 							<button id="btn_refresh_frame" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-1.5 px-3 rounded-md inline-flex items-center text-sm"><i data-lucide="rotate-ccw" class="h-4 w-4 mr-2"></i> รีเฟรชภาพ</button>
 							<button id="btn_single_shot" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-1.5 px-3 rounded-md inline-flex items-center text-sm"><i data-lucide="camera" class="h-4 w-4 mr-2"></i> ถ่าย 1 รูป</button>
 						</div>
@@ -424,6 +426,7 @@
 		}
 
 		function refreshFrame(){const img=document.getElementById('img_frame');const u=new URL(img.src, window.location.origin);u.searchParams.set('t', Date.now().toString());img.src=u.toString();}
+		let autoTimer=null;function toggleAuto(){if(autoTimer){clearInterval(autoTimer);autoTimer=null;alert('ปิด Auto-Refresh');}else{autoTimer=setInterval(refreshFrame,1000);alert('เปิด Auto-Refresh ทุก 1s');}}
 
 		async function loadLog(auto=false) {
 			try {
@@ -446,6 +449,7 @@
 			setInterval(loadStatus, 3000);
 			document.getElementById('btn_single_shot').addEventListener('click', async() => { await doSingleShot(); refreshFrame(); });
 			document.getElementById('btn_refresh_frame').addEventListener('click', refreshFrame);
+			document.getElementById('btn_toggle_auto').addEventListener('click', toggleAuto);
 			document.getElementById('btn_save_config').addEventListener('click', saveConfig);
 			document.getElementById('btn_restart_service').addEventListener('click', async () => { await api('/service/restart', { method: 'POST' }); loadServiceStatus(); });
 			document.getElementById('btn_download_log').addEventListener('click', () => { window.location = '/download/log'; });
