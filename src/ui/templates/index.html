@@ -1,350 +1,457 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jetson to KUKA Control Panel</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        body {
-            font-family: 'Sarabun', sans-serif;
-            background-color: #111827; /* bg-gray-900 */
-            color: #d1d5db; /* text-gray-300 */
-        }
-        .sidebar-icon {
-            stroke-width: 1.5;
-        }
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-        .status-green { background-color: #34d399; } /* emerald-400 */
-        .status-yellow { background-color: #fbbf24; } /* amber-400 */
-        .status-red { background-color: #f87171; } /* red-400 */
-        .status-gray { background-color: #6b7280; } /* gray-500 */
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Jetson to KUKA Control Panel</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
+	<script src="https://unpkg.com/lucide@latest"></script>
+	<style>
+		body {
+			font-family: 'Sarabun', sans-serif;
+			background-color: #111827; /* bg-gray-900 */
+			color: #d1d5db; /* text-gray-300 */
+		}
+		.sidebar-icon {
+			stroke-width: 1.5;
+		}
+		.status-dot {
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+			display: inline-block;
+		}
+		.status-green { background-color: #34d399; } /* emerald-400 */
+		.status-yellow { background-color: #fbbf24; } /* amber-400 */
+		.status-red { background-color: #f87171; } /* red-400 */
+		.status-gray { background-color: #6b7280; } /* gray-500 */
 
-        /* Custom scrollbar for a better look */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1f2937; /* bg-gray-800 */
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #4b5563; /* bg-gray-600 */
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #6b7280; /* bg-gray-500 */
-        }
-        /* Hide number input spinners */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-          -webkit-appearance: none; 
-          margin: 0; 
-        }
-        input[type=number] {
-          -moz-appearance: textfield;
-        }
-    </style>
+		/* Custom scrollbar for a better look */
+		::-webkit-scrollbar { width: 8px; }
+		::-webkit-scrollbar-track { background: #1f2937; }
+		::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+		::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+		/* Hide number input spinners */
+		input[type=number]::-webkit-inner-spin-button,
+		input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+		input[type=number] { -moz-appearance: textfield; }
+	</style>
 </head>
 <body class="flex h-screen">
 
-    <!-- Sidebar Navigation -->
-    <aside class="w-64 bg-gray-900 border-r border-gray-700 flex flex-col">
-        <div class="h-16 flex items-center justify-center border-b border-gray-700">
-            <i data-lucide="robot" class="h-8 w-8 text-cyan-400"></i>
-            <h1 class="text-xl font-bold ml-2 text-white">KUKA Vision</h1>
-        </div>
-        <nav class="flex-1 px-4 py-4 space-y-2">
-            <a href="#dashboard" onclick="showPage('dashboard')" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
-                <i data-lucide="layout-dashboard" class="h-5 w-5 mr-3 sidebar-icon"></i> แดชบอร์ด
-            </a>
-            <a href="#config" onclick="showPage('config')" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
-                <i data-lucide="sliders-horizontal" class="h-5 w-5 mr-3 sidebar-icon"></i> ตั้งค่าระบบ
-            </a>
-            <a href="#logs" onclick="showPage('logs')" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
-                <i data-lucide="file-text" class="h-5 w-5 mr-3 sidebar-icon"></i> ไฟล์ Log
-            </a>
-            <a href="#system" onclick="showPage('system')" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
-                <i data-lucide="server" class="h-5 w-5 mr-3 sidebar-icon"></i> ควบคุม Service
-            </a>
-        </nav>
-        <div class="p-4 border-t border-gray-700 text-xs text-gray-500">
-            <p>Jetson YOLOv8 + RealSense</p>
-            <p>&copy; 2025</p>
-        </div>
-    </aside>
+	<!-- Sidebar Navigation -->
+	<aside class="w-64 bg-gray-900 border-r border-gray-700 flex flex-col">
+		<div class="h-16 flex items-center justify-center border-b border-gray-700">
+			<i data-lucide="robot" class="h-8 w-8 text-cyan-400"></i>
+			<h1 class="text-xl font-bold ml-2 text-white">KUKA Vision</h1>
+		</div>
+		<nav class="flex-1 px-4 py-4 space-y-2">
+			<a href="#dashboard" onclick="showPage('dashboard')" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
+				<i data-lucide="layout-dashboard" class="h-5 w-5 mr-3 sidebar-icon"></i> แดชบอร์ด
+			</a>
+			<a href="#config" onclick="showPage('config')" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
+				<i data-lucide="sliders-horizontal" class="h-5 w-5 mr-3 sidebar-icon"></i> ตั้งค่าระบบ
+			</a>
+			<a href="#logs" onclick="showPage('logs')" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
+				<i data-lucide="file-text" class="h-5 w-5 mr-3 sidebar-icon"></i> ไฟล์ Log
+			</a>
+			<a href="#system" onclick="showPage('system')" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md">
+				<i data-lucide="server" class="h-5 w-5 mr-3 sidebar-icon"></i> ควบคุม Service
+			</a>
+		</nav>
+		<div class="p-4 border-t border-gray-700 text-xs text-gray-500">
+			<p>Jetson YOLOv8 + RealSense</p>
+			<p>&copy; 2025</p>
+		</div>
+	</aside>
 
-    <!-- Main Content -->
-    <main class="flex-1 p-6 overflow-y-auto">
-        
-        <!-- Dashboard Page -->
-        <div id="page-dashboard" class="page">
-            <h2 class="text-3xl font-bold text-white mb-6">แดชบอร์ดและสถานะการทำงาน</h2>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Camera Feed and Detections -->
-                <div class="lg:col-span-2 bg-gray-800 rounded-lg shadow-lg p-4">
-                    <h3 class="text-lg font-semibold text-white mb-2">ภาพจากกล้อง RealSense</h3>
-                    <div class="aspect-video bg-black rounded-md flex items-center justify-center mb-4">
-                        <img src="https://placehold.co/1280x720/000000/FFFFFF?text=Live+Camera+Feed" alt="Live Camera Feed" class="w-full h-full object-cover rounded-md">
-                    </div>
-                    <h3 class="text-lg font-semibold text-white mb-2">ผลการตรวจจับล่าสุด (Detections)</h3>
-                    <div class="h-48 bg-gray-900 rounded-md p-2 font-mono text-sm overflow-y-auto">
-                        <p>[11:21:03] Detected: <span class="text-cyan-400">person</span> (92%) | xyz_cam: [0.12, 0.45, 1.53] | xyz_robot: [1.12, -0.25, 0.83]</p>
-                        <p>[11:21:03] Detected: <span class="text-cyan-400">cup</span> (88%) | xyz_cam: [-0.21, 0.33, 1.21] | xyz_robot: [0.79, -0.37, 0.51]</p>
-                        <p>[11:21:04] Detected: <span class="text-cyan-400">person</span> (93%) | xyz_cam: [0.13, 0.45, 1.52] | xyz_robot: [1.13, -0.25, 0.82]</p>
-                        <p class="text-gray-500">[No new detections]</p>
-                    </div>
-                </div>
+	<!-- Main Content -->
+	<main class="flex-1 p-6 overflow-y-auto">
+		
+		<!-- Dashboard Page -->
+		<div id="page-dashboard" class="page">
+			<h2 class="text-3xl font-bold text-white mb-6">แดชบอร์ดและสถานะการทำงาน</h2>
+			
+			<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				<!-- Camera Feed and Detections -->
+				<div class="lg:col-span-2 bg-gray-800 rounded-lg shadow-lg p-4">
+					<div class="flex items-center justify-between mb-2">
+						<h3 class="text-lg font-semibold text-white">ภาพจากกล้อง RealSense</h3>
+						<button id="btn_single_shot" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-1.5 px-3 rounded-md inline-flex items-center text-sm">
+							<i data-lucide="camera" class="h-4 w-4 mr-2"></i> ถ่าย 1 รูป (Single-shot)
+						</button>
+					</div>
+					<div class="aspect-video bg-black rounded-md flex items-center justify-center mb-4">
+						<img src="https://placehold.co/1280x720/000000/FFFFFF?text=Live+Camera+Feed" alt="Live Camera Feed" class="w-full h-full object-cover rounded-md">
+					</div>
+					<h3 class="text-lg font-semibold text-white mb-2">ผลการตรวจจับล่าสุด (Detections)</h3>
+					<div id="detections" class="h-48 bg-gray-900 rounded-md p-2 font-mono text-sm overflow-y-auto">
+						<p class="text-gray-500">[ยังไม่มีผลลัพธ์]</p>
+					</div>
+					<div class="mt-3">
+						<h4 class="text-sm text-gray-400 mb-1">Single-shot JSON Payload</h4>
+						<pre id="single_payload" class="h-40 bg-gray-900 rounded-md p-2 font-mono text-xs overflow-y-auto"></pre>
+					</div>
+				</div>
 
-                <!-- Status and Performance -->
-                <div class="space-y-6">
-                    <div class="bg-gray-800 rounded-lg shadow-lg p-4">
-                        <h3 class="text-lg font-semibold text-white mb-3">สถานะระบบ (System Status)</h3>
-                        <ul class="space-y-2 text-sm">
-                            <li class="flex justify-between items-center"><span><i data-lucide="camera" class="inline-block h-4 w-4 mr-2"></i>RealSense Camera</span><span class="flex items-center"><span class="status-dot status-green mr-2"></span>Connected</span></li>
-                            <li class="flex justify-between items-center"><span><i data-lucide="cpu" class="inline-block h-4 w-4 mr-2"></i>YOLOv8 Detector</span><span class="flex items-center"><span class="status-dot status-green mr-2"></span>Loaded (CUDA)</span></li>
-                            <li class="flex justify-between items-center"><span><i data-lucide="arrow-right-left" class="inline-block h-4 w-4 mr-2"></i>UDP Output</span><span class="flex items-center"><span class="status-dot status-green mr-2"></span>Sending</span></li>
-                            <li class="flex justify-between items-center"><span><i data-lucide="arrow-right-left" class="inline-block h-4 w-4 mr-2"></i>TCP Output</span><span class="flex items-center"><span class="status-dot status-gray mr-2"></span>Disabled</span></li>
-                            <li class="flex justify-between items-center"><span><i data-lucide="arrow-right-left" class="inline-block h-4 w-4 mr-2"></i>KUKA EKI Output</span><span class="flex items-center"><span class="status-dot status-yellow mr-2"></span>Connecting</span></li>
-                        </ul>
-                    </div>
-                    <div class="bg-gray-800 rounded-lg shadow-lg p-4">
-                        <h3 class="text-lg font-semibold text-white mb-3">ประสิทธิภาพ (Performance)</h3>
-                        <ul class="space-y-2 text-sm">
-                            <li class="flex justify-between items-center"><span>Pipeline FPS</span><span class="font-mono text-green-400">28.5</span></li>
-                            <li class="flex justify-between items-center"><span>Inference Time</span><span class="font-mono text-green-400">25.2 ms</span></li>
-                            <li class="flex justify-between items-center"><span>GPU Usage</span><span class="font-mono text-green-400">65 %</span></li>
-                            <li class="flex justify-between items-center"><span>Memory Usage</span><span class="font-mono text-yellow-400">3.2 / 8.0 GB</span></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
+				<!-- Status and Performance -->
+				<div class="space-y-6">
+					<div class="bg-gray-800 rounded-lg shadow-lg p-4">
+						<h3 class="text-lg font-semibold text-white mb-3">สถานะระบบ (System Status)</h3>
+						<ul class="space-y-2 text-sm">
+							<li class="flex justify-between items-center"><span><i data-lucide="camera" class="inline-block h-4 w-4 mr-2"></i>RealSense Camera</span><span class="flex items-center"><span id="dot_camera" class="status-dot status-gray mr-2"></span><span id="txt_camera">Unknown</span></span></li>
+							<li class="flex justify-between items-center"><span><i data-lucide="cpu" class="inline-block h-4 w-4 mr-2"></i>YOLOv8 Detector</span><span class="flex items-center"><span id="dot_detector" class="status-dot status-gray mr-2"></span><span id="txt_detector">Unknown</span></span></li>
+							<li class="flex justify-between items-center"><span><i data-lucide="arrow-right-left" class="inline-block h-4 w-4 mr-2"></i>UDP Output</span><span class="flex items-center"><span id="dot_udp" class="status-dot status-gray mr-2"></span><span id="txt_udp">Disabled</span></span></li>
+							<li class="flex justify-between items-center"><span><i data-lucide="arrow-right-left" class="inline-block h-4 w-4 mr-2"></i>TCP Output</span><span class="flex items-center"><span id="dot_tcp" class="status-dot status-gray mr-2"></span><span id="txt_tcp">Disabled</span></span></li>
+							<li class="flex justify-between items-center"><span><i data-lucide="arrow-right-left" class="inline-block h-4 w-4 mr-2"></i>KUKA EKI Output</span><span class="flex items-center"><span id="dot_eki" class="status-dot status-gray mr-2"></span><span id="txt_eki">Disabled</span></span></li>
+						</ul>
+					</div>
+					<div class="bg-gray-800 rounded-lg shadow-lg p-4">
+						<h3 class="text-lg font-semibold text-white mb-3">ประสิทธิภาพ (Performance)</h3>
+						<ul class="space-y-2 text-sm">
+							<li class="flex justify-between items-center"><span>Pipeline FPS</span><span id="perf_fps" class="font-mono text-green-400">-</span></li>
+							<li class="flex justify-between items-center"><span>Inference Time</span><span id="perf_inf" class="font-mono text-green-400">-</span></li>
+							<li class="flex justify-between items-center"><span>GPU Usage</span><span id="perf_gpu" class="font-mono text-green-400">-</span></li>
+							<li class="flex justify-between items-center"><span>Memory Usage</span><span id="perf_mem" class="font-mono text-yellow-400">-</span></li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
 
-        <!-- Config Page -->
-        <div id="page-config" class="page hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-3xl font-bold text-white">ตั้งค่าระบบ (config.yaml)</h2>
-                <div>
-                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md inline-flex items-center">
-                        <i data-lucide="save" class="h-4 w-4 mr-2"></i> บันทึกการตั้งค่า
-                    </button>
-                    <button class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-md inline-flex items-center ml-2">
-                        <i data-lucide="refresh-cw" class="h-4 w-4 mr-2"></i> รีโหลด Service
-                    </button>
-                </div>
-            </div>
+		<!-- Config Page -->
+		<div id="page-config" class="page hidden">
+			<div class="flex justify-between items-center mb-6">
+				<h2 class="text-3xl font-bold text-white">ตั้งค่าระบบ (config.yaml)</h2>
+				<div>
+					<button id="btn_save_config" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md inline-flex items-center">
+						<i data-lucide="save" class="h-4 w-4 mr-2"></i> บันทึกการตั้งค่า
+					</button>
+					<button id="btn_restart_service" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-md inline-flex items-center ml-2">
+						<i data-lucide="refresh-cw" class="h-4 w-4 mr-2"></i> รีโหลด Service
+					</button>
+				</div>
+			</div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Model & Runtime -->
-                <div class="bg-gray-800 rounded-lg shadow-lg p-6">
-                    <h3 class="text-xl font-semibold text-white border-b border-gray-600 pb-2 mb-4">Model & Runtime</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-400 mb-1">Model Path</label>
-                            <input type="text" value="models/yolov8n.pt" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-400 mb-1">Device</label>
-                            <select class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500">
-                                <option>auto</option>
-                                <option selected>0</option>
-                                <option>cpu</option>
-                            </select>
-                        </div>
-                        <div class="flex items-center">
-                            <input id="fp16" type="checkbox" checked class="h-4 w-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500">
-                            <label for="fp16" class="ml-2 text-sm text-gray-300">ใช้ FP16 (Half Precision)</label>
-                        </div>
-                    </div>
-                </div>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<!-- Model & Runtime -->
+				<div class="bg-gray-800 rounded-lg shadow-lg p-6">
+					<h3 class="text-xl font-semibold text-white border-b border-gray-600 pb-2 mb-4">Model & Runtime</h3>
+					<div class="space-y-4">
+						<div>
+							<label class="block text-sm font-medium text-gray-400 mb-1">Model Path</label>
+							<input id="cfg_model_path" type="text" value="models/yolov8n.pt" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500">
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-400 mb-1">Device</label>
+							<select id="cfg_runtime_device" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500">
+								<option>auto</option>
+								<option>0</option>
+								<option>cpu</option>
+							</select>
+						</div>
+						<div class="flex items-center">
+							<input id="cfg_runtime_half" type="checkbox" class="h-4 w-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500">
+							<label for="cfg_runtime_half" class="ml-2 text-sm text-gray-300">ใช้ FP16 (Half Precision)</label>
+						</div>
+					</div>
+				</div>
 
-                <!-- Camera -->
-                <div class="bg-gray-800 rounded-lg shadow-lg p-6">
-                    <h3 class="text-xl font-semibold text-white border-b border-gray-600 pb-2 mb-4">Camera</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-400 mb-1">Color Width</label>
-                            <input type="number" value="1280" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-400 mb-1">Color Height</label>
-                            <input type="number" value="720" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-400 mb-1">Depth Width</label>
-                            <input type="number" value="1280" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-400 mb-1">FPS</label>
-                            <input type="number" value="30" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500">
-                        </div>
-                    </div>
-                     <div class="flex items-center mt-4">
-                        <input id="align_to_color" type="checkbox" checked class="h-4 w-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500">
-                        <label for="align_to_color" class="ml-2 text-sm text-gray-300">Align Depth to Color</label>
-                    </div>
-                </div>
+				<!-- Camera -->
+				<div class="bg-gray-800 rounded-lg shadow-lg p-6">
+					<h3 class="text-xl font-semibold text-white border-b border-gray-600 pb-2 mb-4">Camera</h3>
+					<div class="grid grid-cols-2 gap-4">
+						<div>
+							<label class="block text-sm font-medium text-gray-400 mb-1">Color Width</label>
+							<input id="cfg_color_w" type="number" value="640" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500">
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-400 mb-1">Color Height</label>
+							<input id="cfg_color_h" type="number" value="480" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500">
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-400 mb-1">Depth Width</label>
+							<input id="cfg_depth_w" type="number" value="640" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500">
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-400 mb-1">FPS (Color)</label>
+							<input id="cfg_color_fps" type="number" value="30" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-cyan-500 focus:border-cyan-500">
+						</div>
+					</div>
+					<div class="flex items-center mt-4">
+						<input id="cfg_align" type="checkbox" class="h-4 w-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500">
+						<label for="cfg_align" class="ml-2 text-sm text-gray-300">Align Depth to Color</label>
+					</div>
+				</div>
 
-                <!-- Outputs -->
-                <div class="md:col-span-2 bg-gray-800 rounded-lg shadow-lg p-6">
-                    <h3 class="text-xl font-semibold text-white border-b border-gray-600 pb-2 mb-4">Outputs</h3>
-                    <!-- Tabs for outputs -->
-                    <div x-data="{ tab: 'udp' }" class="w-full">
-                        <div class="border-b border-gray-600">
-                            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                                <a href="#" @click.prevent="tab = 'udp'" :class="{'border-cyan-500 text-cyan-400': tab === 'udp', 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-400': tab !== 'udp'}" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">UDP JSON</a>
-                                <a href="#" @click.prevent="tab = 'tcp'" :class="{'border-cyan-500 text-cyan-400': tab === 'tcp', 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-400': tab !== 'tcp'}" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">TCP JSON</a>
-                                <a href="#" @click.prevent="tab = 'eki'" :class="{'border-cyan-500 text-cyan-400': tab === 'eki', 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-400': tab !== 'eki'}" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">KUKA EKI</a>
-                            </nav>
-                        </div>
-                        <div class="pt-6">
-                            <div x-show="tab === 'udp'" class="space-y-4">
-                                <div class="flex items-center"><input type="checkbox" checked class="h-4 w-4 rounded"><label class="ml-2">เปิดใช้งาน UDP</label></div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div><label class="block text-sm mb-1">Host</label><input type="text" value="192.168.1.100" class="w-full bg-gray-700 rounded-md p-2"></div>
-                                    <div><label class="block text-sm mb-1">Port</label><input type="number" value="5005" class="w-full bg-gray-700 rounded-md p-2"></div>
-                                </div>
-                            </div>
-                            <div x-show="tab === 'tcp'" class="space-y-4 hidden">
-                                <div class="flex items-center"><input type="checkbox" class="h-4 w-4 rounded"><label class="ml-2">เปิดใช้งาน TCP</label></div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div><label class="block text-sm mb-1">Host</label><input type="text" value="127.0.0.1" class="w-full bg-gray-700 rounded-md p-2"></div>
-                                    <div><label class="block text-sm mb-1">Port</label><input type="number" value="6000" class="w-full bg-gray-700 rounded-md p-2"></div>
-                                </div>
-                            </div>
-                            <div x-show="tab === 'eki'" class="space-y-4 hidden">
-                                <div class="flex items-center"><input type="checkbox" class="h-4 w-4 rounded"><label class="ml-2">เปิดใช้งาน KUKA EKI</label></div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div><label class="block text-sm mb-1">Host</label><input type="text" value="192.168.1.2" class="w-full bg-gray-700 rounded-md p-2"></div>
-                                    <div><label class="block text-sm mb-1">Port</label><input type="number" value="54600" class="w-full bg-gray-700 rounded-md p-2"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+				<!-- Outputs -->
+				<div class="md:col-span-2 bg-gray-800 rounded-lg shadow-lg p-6">
+					<h3 class="text-xl font-semibold text-white border-b border-gray-600 pb-2 mb-4">Outputs</h3>
+					<div x-data="{ tab: 'udp' }" class="w-full">
+						<div class="border-b border-gray-600">
+							<nav class="-mb-px flex space-x-8" aria-label="Tabs">
+								<a href="#" @click.prevent="tab = 'udp'" :class="{'border-cyan-500 text-cyan-400': tab === 'udp', 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-400': tab !== 'udp'}" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">UDP JSON</a>
+								<a href="#" @click.prevent="tab = 'tcp'" :class="{'border-cyan-500 text-cyan-400': tab === 'tcp', 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-400': tab !== 'tcp'}" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">TCP JSON</a>
+								<a href="#" @click.prevent="tab = 'eki'" :class="{'border-cyan-500 text-cyan-400': tab === 'eki', 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-400': tab !== 'eki'}" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">KUKA EKI</a>
+							</nav>
+						</div>
+						<div class="pt-6">
+							<div x-show="tab === 'udp'" class="space-y-4">
+								<div class="flex items-center"><input id="cfg_udp_enabled" type="checkbox" class="h-4 w-4 rounded"><label class="ml-2">เปิดใช้งาน UDP</label></div>
+								<div class="grid grid-cols-2 gap-4">
+									<div><label class="block text-sm mb-1">Host</label><input id="cfg_udp_host" type="text" value="127.0.0.1" class="w-full bg-gray-700 rounded-md p-2"></div>
+									<div><label class="block text-sm mb-1">Port</label><input id="cfg_udp_port" type="number" value="5005" class="w-full bg-gray-700 rounded-md p-2"></div>
+								</div>
+							</div>
+							<div x-show="tab === 'tcp'" class="space-y-4 hidden">
+								<div class="flex items-center"><input id="cfg_tcp_enabled" type="checkbox" class="h-4 w-4 rounded"><label class="ml-2">เปิดใช้งาน TCP</label></div>
+								<div class="grid grid-cols-2 gap-4">
+									<div><label class="block text-sm mb-1">Host</label><input id="cfg_tcp_host" type="text" value="127.0.0.1" class="w-full bg-gray-700 rounded-md p-2"></div>
+									<div><label class="block text-sm mb-1">Port</label><input id="cfg_tcp_port" type="number" value="6000" class="w-full bg-gray-700 rounded-md p-2"></div>
+								</div>
+							</div>
+							<div x-show="tab === 'eki'" class="space-y-4 hidden">
+								<div class="flex items-center"><input id="cfg_eki_enabled" type="checkbox" class="h-4 w-4 rounded"><label class="ml-2">เปิดใช้งาน KUKA EKI</label></div>
+								<div class="grid grid-cols-2 gap-4">
+									<div><label class="block text-sm mb-1">Host</label><input id="cfg_eki_host" type="text" value="127.0.0.1" class="w-full bg-gray-700 rounded-md p-2"></div>
+									<div><label class="block text-sm mb-1">Port</label><input id="cfg_eki_port" type="number" value="7000" class="w-full bg-gray-700 rounded-md p-2"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 
-                <!-- Calibration -->
-                <div class="md:col-span-2 bg-gray-800 rounded-lg shadow-lg p-6">
-                    <h3 class="text-xl font-semibold text-white border-b border-gray-600 pb-2 mb-4">Calibration (T_cam_to_robot)</h3>
-                    <p class="text-sm text-gray-400 mb-4">ตั้งค่า Transformation Matrix 4x4 เพื่อแปลงพิกัดจากกล้องไปยังฐานหุ่นยนต์</p>
-                    <div class="grid grid-cols-4 gap-2 font-mono">
-                        <input type="number" step="0.01" value="1.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
-                        <input type="number" step="0.01" value="0.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
-                        <input type="number" step="0.01" value="0.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
-                        <input type="number" step="0.01" value="1.05" class="w-full bg-gray-700 rounded-md p-2 text-center text-cyan-400">
-                        <input type="number" step="0.01" value="0.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
-                        <input type="number" step="0.01" value="1.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
-                        <input type="number" step="0.01" value="0.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
-                        <input type="number" step="0.01" value="-0.20" class="w-full bg-gray-700 rounded-md p-2 text-center text-cyan-400">
-                        <input type="number" step="0.01" value="0.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
-                        <input type="number" step="0.01" value="0.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
-                        <input type="number" step="0.01" value="1.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
-                        <input type="number" step="0.01" value="0.75" class="w-full bg-gray-700 rounded-md p-2 text-center text-cyan-400">
-                        <input type="number" step="0.01" value="0.00" class="w-full bg-gray-900 rounded-md p-2 text-center" disabled>
-                        <input type="number" step="0.01" value="0.00" class="w-full bg-gray-900 rounded-md p-2 text-center" disabled>
-                        <input type="number" step="0.01" value="0.00" class="w-full bg-gray-900 rounded-md p-2 text-center" disabled>
-                        <input type="number" step="0.01" value="1.00" class="w-full bg-gray-900 rounded-md p-2 text-center" disabled>
-                    </div>
-                </div>
-            </div>
-        </div>
+				<!-- Calibration -->
+				<div class="md:col-span-2 bg-gray-800 rounded-lg shadow-lg p-6">
+					<h3 class="text-xl font-semibold text-white border-b border-gray-600 pb-2 mb-4">Calibration (T_cam_to_robot)</h3>
+					<p class="text-sm text-gray-400 mb-4">ตั้งค่า Transformation Matrix 4x4 เพื่อแปลงพิกัดจากกล้องไปยังฐานหุ่นยนต์</p>
+					<div class="grid grid-cols-4 gap-2 font-mono">
+						<input type="number" step="0.01" value="1.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
+						<input type="number" step="0.01" value="0.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
+						<input type="number" step="0.01" value="0.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
+						<input type="number" step="0.01" value="1.05" class="w-full bg-gray-700 rounded-md p-2 text-center text-cyan-400">
+						<input type="number" step="0.01" value="0.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
+						<input type="number" step="0.01" value="1.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
+						<input type="number" step="0.01" value="0.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
+						<input type="number" step="0.01" value="-0.20" class="w-full bg-gray-700 rounded-md p-2 text-center text-cyan-400">
+						<input type="number" step="0.01" value="0.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
+						<input type="number" step="0.01" value="0.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
+						<input type="number" step="0.01" value="1.00" class="w-full bg-gray-700 rounded-md p-2 text-center">
+						<input type="number" step="0.01" value="0.75" class="w-full bg-gray-700 rounded-md p-2 text-center text-cyan-400">
+						<input type="number" step="0.01" value="0.00" class="w-full bg-gray-900 rounded-md p-2 text-center" disabled>
+						<input type="number" step="0.01" value="0.00" class="w-full bg-gray-900 rounded-md p-2 text-center" disabled>
+						<input type="number" step="0.01" value="0.00" class="w-full bg-gray-900 rounded-md p-2 text-center" disabled>
+						<input type="number" step="0.01" value="1.00" class="w-full bg-gray-900 rounded-md p-2 text-center" disabled>
+					</div>
+				</div>
+			</div>
+		</div>
 
-        <!-- Logs Page -->
-        <div id="page-logs" class="page hidden">
-            <h2 class="text-3xl font-bold text-white mb-6">ไฟล์ Log</h2>
-            <div class="bg-gray-800 rounded-lg shadow-lg p-4">
-                <div class="flex justify-between items-center mb-4">
-                    <div class="flex space-x-2">
-                        <button class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md">ทั้งหมด</button>
-                        <button class="bg-blue-800 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">INFO</button>
-                        <button class="bg-yellow-800 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-md">WARNING</button>
-                        <button class="bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md">ERROR</button>
-                    </div>
-                    <div>
-                        <button class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md inline-flex items-center">
-                            <i data-lucide="download" class="h-4 w-4 mr-2"></i> ดาวน์โหลด Log
-                        </button>
-                    </div>
-                </div>
-                <div class="h-96 bg-gray-900 rounded-md p-3 font-mono text-xs overflow-y-auto">
-                    <p><span class="text-gray-500">2025-08-13 11:20:01,123 INFO:</span> Application starting...</p>
-                    <p><span class="text-gray-500">2025-08-13 11:20:01,543 INFO:</span> Loading config from config/config.yaml</p>
-                    <p><span class="text-gray-500">2025-08-13 11:20:02,011 INFO:</span> Initializing RealSense camera...</p>
-                    <p><span class="text-gray-500">2025-08-13 11:20:02,899 INFO:</span> RealSense camera started with profile: 1280x720 @ 30fps</p>
-                    <p><span class="text-gray-500">2025-08-13 11:20:03,150 INFO:</span> Loading YOLOv8 model from models/yolov8n.pt</p>
-                    <p><span class="text-gray-500">2025-08-13 11:20:04,500 INFO:</span> Model loaded on device: cuda:0 with half precision.</p>
-                    <p><span class="text-gray-500">2025-08-13 11:20:04,502 INFO:</span> UDP sender enabled for 192.168.1.100:5005</p>
-                    <p><span class="text-yellow-400">2025-08-13 11:20:04,503 WARNING:</span> TCP sender is disabled.</p>
-                    <p><span class="text-gray-500">2025-08-13 11:20:04,505 INFO:</span> Starting main processing loop...</p>
-                </div>
-            </div>
-        </div>
+		<!-- Logs Page -->
+		<div id="page-logs" class="page hidden">
+			<h2 class="text-3xl font-bold text-white mb-6">ไฟล์ Log</h2>
+			<div class="bg-gray-800 rounded-lg shadow-lg p-4">
+				<div class="flex justify-between items-center mb-4">
+					<div class="flex space-x-2">
+						<button id="btn_logs_all" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md">ทั้งหมด</button>
+						<button id="btn_logs_info" class="bg-blue-800 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">INFO</button>
+						<button id="btn_logs_warn" class="bg-yellow-800 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-md">WARNING</button>
+						<button id="btn_logs_err" class="bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md">ERROR</button>
+					</div>
+					<div>
+						<button id="btn_download_log" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md inline-flex items-center">
+							<i data-lucide="download" class="h-4 w-4 mr-2"></i> ดาวน์โหลด Log
+						</button>
+					</div>
+				</div>
+				<div id="log_container" class="h-96 bg-gray-900 rounded-md p-3 font-mono text-xs overflow-y-auto"></div>
+			</div>
+		</div>
 
-        <!-- System Page -->
-        <div id="page-system" class="page hidden">
-            <h2 class="text-3xl font-bold text-white mb-6">ควบคุม Service (systemd)</h2>
-            <div class="bg-gray-800 rounded-lg shadow-lg p-6">
-                <h3 class="text-xl font-semibold text-white mb-4">jetson-yolo-realsense-kuka.service</h3>
-                <div class="flex space-x-4 mb-6">
-                    <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-md inline-flex items-center">
-                        <i data-lucide="play" class="h-5 w-5 mr-2"></i> Start
-                    </button>
-                    <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-md inline-flex items-center">
-                        <i data-lucide="square" class="h-5 w-5 mr-2"></i> Stop
-                    </button>
-                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-md inline-flex items-center">
-                        <i data-lucide="refresh-cw" class="h-5 w-5 mr-2"></i> Restart
-                    </button>
-                </div>
-                <h3 class="text-lg font-semibold text-white mb-2">สถานะปัจจุบัน (Service Status)</h3>
-                <div class="h-80 bg-gray-900 rounded-md p-3 font-mono text-xs overflow-y-auto">
-                    <pre>
-● jetson-yolo-realsense-kuka.service - Jetson YOLOv8 RealSense to KUKA Service
-     Loaded: loaded (/etc/systemd/system/jetson-yolo-realsense-kuka.service; enabled; vendor preset: enabled)
-     Active: <span class="text-green-400">active (running)</span> since Wed 2025-08-13 11:15:00 +07; 5min ago
-   Main PID: 1234 (python3)
-      Tasks: 10 (limit: 8192)
-     Memory: 2.8G
-        CPU: 3min 12.456s
-     CGroup: /system.slice/jetson-yolo-realsense-kuka.service
-             └─1234 /home/god/jetson-yolo-realsense-kuka/.venv/bin/python3 src/main.py
+		<!-- System Page -->
+		<div id="page-system" class="page hidden">
+			<h2 class="text-3xl font-bold text-white mb-6">ควบคุม Service (systemd)</h2>
+			<div class="bg-gray-800 rounded-lg shadow-lg p-6">
+				<h3 class="text-xl font-semibold text-white mb-4">jetson-yolo-realsense-kuka.service</h3>
+				<div class="flex space-x-4 mb-6">
+					<button id="svc_start" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-md inline-flex items-center">
+						<i data-lucide="play" class="h-5 w-5 mr-2"></i> Start
+					</button>
+					<button id="svc_stop" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-md inline-flex items-center">
+						<i data-lucide="square" class="h-5 w-5 mr-2"></i> Stop
+					</button>
+					<button id="svc_restart" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-md inline-flex items-center">
+						<i data-lucide="refresh-cw" class="h-5 w-5 mr-2"></i> Restart
+					</button>
+				</div>
+				<h3 class="text-lg font-semibold text-white mb-2">สถานะปัจจุบัน (Service Status)</h3>
+				<div class="h-80 bg-gray-900 rounded-md p-3 font-mono text-xs overflow-y-auto">
+					<pre id="svc_status_pre"></pre>
+				</div>
+			</div>
+		</div>
 
-Aug 13 11:15:00 jetson systemd[1]: Started Jetson YOLOv8 RealSense to KUKA Service.
-Aug 13 11:15:01 jetson python3[1234]: INFO: Application starting...
-Aug 13 11:15:02 jetson python3[1234]: INFO: RealSense camera started...
-Aug 13 11:15:03 jetson python3[1234]: INFO: YOLOv8 model loaded on cuda:0...
-                    </pre>
-                </div>
-            </div>
-        </div>
+	</main>
 
-    </main>
+	<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+	<script>
+		lucide.createIcons();
 
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script>
-        // Initialize Lucide icons
-        lucide.createIcons();
+		function showPage(pageId) {
+			document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
+			document.getElementById('page-' + pageId).classList.remove('hidden');
+			if (pageId === 'dashboard') { loadStatus(); loadLog(false); }
+			if (pageId === 'config') { loadConfig(); }
+			if (pageId === 'logs') { loadLog(true); }
+			if (pageId === 'system') { loadServiceStatus(); }
+		}
 
-        // Simple single-page navigation
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.add('hidden');
-            });
-            document.getElementById('page-' + pageId).classList.remove('hidden');
-        }
+		async function api(path, options={}) {
+			const r = await fetch(path, options);
+			const ct = r.headers.get('content-type') || '';
+			if (ct.includes('application/json')) return await r.json();
+			return await r.text();
+		}
 
-        // Set initial page
-        document.addEventListener('DOMContentLoaded', () => {
-            showPage('dashboard');
-        });
-    </script>
+		function setDot(id, on, pending=false) {
+			const el = document.getElementById(id);
+			if (!el) return;
+			el.classList.remove('status-green','status-gray','status-yellow','status-red');
+			el.classList.add(on ? 'status-green' : (pending ? 'status-yellow' : 'status-gray'));
+		}
+
+		async function loadStatus() {
+			try {
+				const s = await api('/status');
+				setDot('dot_udp', !!(s.outputs && s.outputs.udp));
+				setDot('dot_tcp', !!(s.outputs && s.outputs.tcp));
+				setDot('dot_eki', !!(s.outputs && s.outputs.eki));
+				setDot('dot_detector', s.running);
+				document.getElementById('txt_detector').textContent = s.running ? `Running (${s.runtime?.device || 'auto'})` : 'Stopped';
+				setDot('dot_camera', s.running, !s.running);
+				document.getElementById('txt_camera').textContent = s.running ? 'Connected' : 'Idle';
+			} catch {}
+		}
+
+		async function loadConfig() {
+			try {
+				const j = await api('/config');
+				const c = j.config || {};
+				document.getElementById('cfg_model_path').value = c.model?.path || '';
+				document.getElementById('cfg_runtime_device').value = c.runtime?.device || 'auto';
+				document.getElementById('cfg_runtime_half').checked = !!(c.runtime?.half);
+				document.getElementById('cfg_color_w').value = c.camera?.color?.width ?? 640;
+				document.getElementById('cfg_color_h').value = c.camera?.color?.height ?? 480;
+				document.getElementById('cfg_color_fps').value = c.camera?.color?.fps ?? 30;
+				document.getElementById('cfg_depth_w').value = c.camera?.depth?.width ?? 640;
+				document.getElementById('cfg_align').checked = !!(c.camera?.align_to_color);
+				document.getElementById('cfg_udp_enabled').checked = !!(c.output?.udp?.enabled);
+				document.getElementById('cfg_udp_host').value = c.output?.udp?.host || '';
+				document.getElementById('cfg_udp_port').value = c.output?.udp?.port ?? 5005;
+				document.getElementById('cfg_tcp_enabled').checked = !!(c.output?.tcp?.enabled);
+				document.getElementById('cfg_tcp_host').value = c.output?.tcp?.host || '';
+				document.getElementById('cfg_tcp_port').value = c.output?.tcp?.port ?? 6000;
+				document.getElementById('cfg_eki_enabled').checked = !!(c.output?.eki?.enabled);
+				document.getElementById('cfg_eki_host').value = c.output?.eki?.host || '';
+				document.getElementById('cfg_eki_port').value = c.output?.eki?.port ?? 7000;
+			} catch {}
+		}
+
+		async function saveConfig() {
+			try {
+				const j = await api('/config');
+				const c = j.config || {};
+				c.model = c.model || {};
+				c.runtime = c.runtime || {};
+				c.camera = c.camera || {}; c.camera.color = c.camera.color || {}; c.camera.depth = c.camera.depth || {};
+				c.output = c.output || {}; c.output.udp = c.output.udp || {}; c.output.tcp = c.output.tcp || {}; c.output.eki = c.output.eki || {};
+				c.model.path = document.getElementById('cfg_model_path').value.trim();
+				c.runtime.device = document.getElementById('cfg_runtime_device').value;
+				c.runtime.half = !!document.getElementById('cfg_runtime_half').checked;
+				c.camera.color.width = parseInt(document.getElementById('cfg_color_w').value || '640');
+				c.camera.color.height = parseInt(document.getElementById('cfg_color_h').value || '480');
+				c.camera.color.fps = parseInt(document.getElementById('cfg_color_fps').value || '30');
+				c.camera.depth.width = parseInt(document.getElementById('cfg_depth_w').value || '640');
+				c.camera.align_to_color = !!document.getElementById('cfg_align').checked;
+				c.output.udp.enabled = !!document.getElementById('cfg_udp_enabled').checked;
+				c.output.udp.host = document.getElementById('cfg_udp_host').value.trim();
+				c.output.udp.port = parseInt(document.getElementById('cfg_udp_port').value || '5005');
+				c.output.tcp.enabled = !!document.getElementById('cfg_tcp_enabled').checked;
+				c.output.tcp.host = document.getElementById('cfg_tcp_host').value.trim();
+				c.output.tcp.port = parseInt(document.getElementById('cfg_tcp_port').value || '6000');
+				c.output.eki.enabled = !!document.getElementById('cfg_eki_enabled').checked;
+				c.output.eki.host = document.getElementById('cfg_eki_host').value.trim();
+				c.output.eki.port = parseInt(document.getElementById('cfg_eki_port').value || '7000');
+				const res = await api('/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ config: c }) });
+				if (res && res.ok) {
+					alert('บันทึกการตั้งค่าสำเร็จ');
+				} else {
+					alert('บันทึกไม่สำเร็จ: ' + (res?.error || 'unknown'));
+				}
+			} catch (e) {
+				alert('เกิดข้อผิดพลาดในการบันทึก');
+			}
+		}
+
+		async function doSingleShot() {
+			const out = document.getElementById('single_payload');
+			out.textContent = 'กำลังถ่ายและประมวลผล...';
+			try {
+				const r = await api('/single', { method: 'POST' });
+				if (r.ok) {
+					out.textContent = JSON.stringify(r.payload, null, 2);
+					// Render summary to detections box
+					const detBox = document.getElementById('detections');
+					if (r.payload && Array.isArray(r.payload.detections)) {
+						detBox.innerHTML = r.payload.detections.map(d => {
+							const n = d.class_name || d.class_id;
+							const s = d.score != null ? (d.score*100).toFixed(1) : '-';
+							const xyz = d.xyz ? `[${d.xyz.map(v => Number(v).toFixed(2)).join(', ')}]` : '[]';
+							const xyzr = d.xyz_robot ? `[${d.xyz_robot.map(v => Number(v).toFixed(2)).join(', ')}]` : '[]';
+							return `<p>[${new Date(r.payload.ts*1000).toLocaleTimeString()}] Detected: <span class="text-cyan-400">${n}</span> (${s}%) | xyz_cam: ${xyz} | xyz_robot: ${xyzr}</p>`;
+						}).join('');
+					} else {
+						detBox.innerHTML = '<p class="text-gray-500">[ไม่มีการตรวจจับ]</p>';
+					}
+				} else {
+					out.textContent = 'Error: ' + (r.error || 'unknown');
+				}
+			} catch (e) {
+				out.textContent = 'เกิดข้อผิดพลาด';
+			}
+		}
+
+		async function loadLog(auto=false) {
+			try {
+				const j = await api('/log?n=400');
+				document.getElementById('log_container').textContent = j.log || '';
+				if (auto) setTimeout(() => loadLog(true), 5000);
+			} catch {}
+		}
+
+		async function loadServiceStatus() {
+			try {
+				const j = await api('/service/status');
+				document.getElementById('svc_status_pre').textContent = j.status || '';
+			} catch {}
+		}
+
+		document.addEventListener('DOMContentLoaded', () => {
+			showPage('dashboard');
+			loadStatus();
+			setInterval(loadStatus, 3000);
+			document.getElementById('btn_single_shot').addEventListener('click', doSingleShot);
+			document.getElementById('btn_save_config').addEventListener('click', saveConfig);
+			document.getElementById('btn_restart_service').addEventListener('click', async () => { await api('/service/restart', { method: 'POST' }); loadServiceStatus(); });
+			document.getElementById('btn_download_log').addEventListener('click', () => { window.location = '/download/log'; });
+			document.getElementById('svc_start').addEventListener('click', async () => { await api('/service/start', { method: 'POST' }); loadServiceStatus(); });
+			document.getElementById('svc_stop').addEventListener('click', async () => { await api('/service/stop', { method: 'POST' }); loadServiceStatus(); });
+			document.getElementById('svc_restart').addEventListener('click', async () => { await api('/service/restart', { method: 'POST' }); loadServiceStatus(); });
+			loadConfig();
+			loadLog(false);
+			loadServiceStatus();
+		});
+	</script>
 </body>
 </html>
