@@ -1,3 +1,92 @@
+## คู่มือภาษาไทย: Jetson YOLOv8 + RealSense D435i → KUKA (UDP)
+
+โปรเจคนี้คือแอปสำหรับรันบน NVIDIA Jetson (Ubuntu 22.04) เพื่อรับภาพสี+ลึกจาก Intel RealSense D435i, ตรวจวัตถุด้วย YOLOv8 (ทำงานบน GPU ถ้ามี, ถ้าไม่มีก็ตกลง CPU), แล้วส่งผลลัพธ์ออกทางเครือข่ายไปยังฝั่ง KUKA ได้ 3 รูปแบบ: UDP JSON, TCP JSON, และ KUKA EKI (XML-over-TCP). รองรับการแสดงพรีวิวภาพและรันเป็น systemd service เพื่อให้เริ่มอัตโนมัติหลังบูตเครื่อง
+
+### ภาพรวมการทำงาน (Pipeline)
+- กล้อง RealSense D435i: อ่านภาพสีและลึก พร้อม intrinsics
+- YOLOv8: ตรวจวัตถุบนภาพสี (รองรับ FP16 เมื่อใช้ CUDA)
+- ผูกข้อมูล depth หา xyz ของจุดศูนย์กลางกล่องตรวจจับ (เมตร ในกรอบกล้อง)
+- ถ้ามีเมทริกซ์ 4x4 `calibration.T_cam_to_robot` จะคำนวณ `xyz_robot` (กรอบหุ่นยนต์)
+- ส่งผลลัพธ์ทาง UDP/TCP/EKI และแสดงพรีวิว (ปิดอัตโนมัติถ้าไม่มี DISPLAY)
+
+### โครงสร้างโปรเจคหลัก
+- `src/camera/realsense_camera.py`: จับภาพสี/ลึก, แปลง depth→xyz
+- `src/detector/yolo_detector.py`: โหลด/รัน YOLOv8 (Ultralytics), เลือกอุปกรณ์ `cuda/cpu`
+- `src/output/{udp_sender.py,tcp_sender.py,eki_sender.py}`: ส่งผลลัพธ์หลายรูปแบบ
+- `src/utils/{logger.py,draw.py,geometry.py}`: ยูทิลิตี้
+- `src/main.py`: ควบคุมวงจรอ่านกล้อง→ตรวจจับ→เตรียม payload→ส่งออก→พรีวิว
+- `config/config.yaml`: ตั้งค่าทั้งหมดของระบบ
+- `scripts/{setup_jetson.sh,download_model.sh,run.sh}`: ติดตั้ง/โหลดโมเดล/รัน
+- `systemd/jetson-yolo-realsense-kuka.service`: ตัวอย่าง service สำหรับรันอัตโนมัติ
+
+### ข้อกำหนดฮาร์ดแวร์/ซอฟต์แวร์
+- Jetson พร้อม JetPack 6.x (R36.x) มี CUDA/cuDNN/TensorRT
+- Ubuntu 22.04 64-bit
+- Intel RealSense D435i (เชื่อมต่อ USB3)
+
+### สิ่งที่จำเป็นต้องติดตั้ง (Jetson)
+คำสั่งด้านล่างถูกจัดการให้อัตโนมัติโดยสคริปต์ แต่สรุปให้ทราบว่าใช้อะไรบ้าง
+- แพ็คเกจระบบ: `python3-venv`, `python3-pip`, `python3-dev`, `python3-opencv`, `libgl1-mesa-glx`, `libglib2.0-0`, `cmake`, `build-essential`, `pkg-config`, `git`, `curl`, `wget`, `unzip`
+- RealSense SDK: `librealsense2-utils`, `librealsense2-dev`, `librealsense2-dkms`, `python3-pyrealsense2` (ถ้าหาไม่ได้ สคริปต์มี fallback คอมไพล์จากซอร์ส)
+- Python venv (เปิดใช้ระบบ site-packages เพื่อมองเห็น `pyrealsense2`/OpenCV จาก apt)
+- Python deps ใน `requirements.txt`: `numpy`, `ultralytics`, `PyYAML` (OpenCV ใช้จาก apt ไม่ติดตั้งล้อ `opencv-python` บน Jetson)
+- PyTorch/torchvision สำหรับ Jetson (ถ้าต้องการรันด้วย GPU — ติดตั้งตาม JetPack/CUDA ที่ใช้อยู่)
+
+### ติดตั้งแบบอัตโนมัติ (แนะนำ)
+```bash
+cd /home/god/jetson-yolo-realsense-kuka
+bash scripts/setup_jetson.sh
+bash scripts/download_model.sh
+```
+- สคริปต์จะติดตั้งแพ็คเกจระบบ, เพิ่ม repo ของ RealSense (ถ้าจำเป็น), ติดตั้ง RealSense SDK/pyrealsense2, สร้าง venv, อัปเกรด pip/wheel/setuptools, ติดตั้ง `requirements.txt`, และตรวจสอบการนำเข้า `pyrealsense2`
+
+### ติดตั้ง PyTorch (GPU) สำหรับ Jetson (ออปชัน)
+เลือก index ให้ตรงกับ JetPack/CUDA ของคุณ (ตัวอย่าง JP6.2 CUDA 12.6):
+```bash
+source /home/god/jetson-yolo-realsense-kuka/.venv/bin/activate
+pip install --upgrade pip
+pip install torch torchvision torchaudio --index-url https://pypi.jetson-ai-lab.io/jp6/cu126
+python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+```
+
+### การตั้งค่า `config/config.yaml` ที่สำคัญ
+- `model.path`: ไฟล์ `.pt` ของ YOLO (ดีฟอลต์ `models/yolov8n.pt`)
+- `runtime.device`: `auto`/`cpu`/ดัชนี CUDA เช่น `"0"`, และ `half: true` เพื่อใช้ FP16 เมื่อเป็น CUDA
+- `camera`: ความละเอียด/เฟรมเรตสีและลึก, `align_to_color: true` ให้ depth align กับสี
+- `output.udp`: เปิด/ปิด, `host`, `port`, `send_depth_xyz`, `max_detections`
+- `output.tcp`: เปิด/ปิด TCP JSON, ตั้ง `host`/`port` และ `newline`
+- `output.eki`: เปิด/ปิด KUKA EKI (XML-over-TCP), `host`/`port`, โครง XML ปรับได้ใน `src/output/eki_sender.py`
+- `calibration.T_cam_to_robot`: เมทริกซ์ 4x4 กล้อง→ฐานหุ่นยนต์ เพื่อให้ได้ `xyz_robot`
+- `logging`: เลเวลและไฟล์ล็อก (ดีฟอลต์เขียนที่ `/home/god/jetson-yolo-realsense-kuka/run.log`)
+
+### การรัน
+```bash
+bash /home/god/jetson-yolo-realsense-kuka/scripts/run.sh
+```
+- สคริปต์จะ `source` venv และตั้ง `PYTHONPATH` ให้มองเห็นแพ็คเกจจากระบบ เช่น `pyrealsense2`/OpenCV
+- ปรับ config ตามต้องการใน `config/config.yaml` ก่อนรัน
+
+### เอาต์พุตผลการตรวจจับ
+- UDP JSON: เปิดที่ `output.udp.enabled: true` และตั้ง `host`/`port`
+- TCP JSON: เปิดที่ `output.tcp.enabled: true` และตั้ง `host`/`port`
+- KUKA EKI (XML): เปิดที่ `output.eki.enabled: true` ตรวจรูปแบบ XML ให้ตรงกับคอนฟิก EKI ของคอนโทรลเลอร์ (ปรับได้ใน `src/output/eki_sender.py`)
+
+### รันเป็นบริการ (systemd) — ออปชัน
+```bash
+sudo cp /home/god/jetson-yolo-realsense-kuka/systemd/jetson-yolo-realsense-kuka.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now jetson-yolo-realsense-kuka
+sudo systemctl status jetson-yolo-realsense-kuka
+```
+
+### แก้ปัญหาที่พบบ่อย (ย่อ)
+- ไม่พบ/นำเข้า `pyrealsense2` ไม่ได้: ติดตั้งผ่าน apt หรือคอมไพล์จากซอร์ส (มีขั้นตอนใน `scripts/setup_jetson.sh` และ `docs/INSTALL.md`)
+- OpenCV GUI ไม่มี DISPLAY: ระบบจะปิดพรีวิวอัตโนมัติ ตั้ง `output.preview_window: false` ได้
+- Torch ใช้ GPU ไม่ได้: ติดตั้งล้อให้ตรง JetPack/CUDA แล้วตรวจ `python -c "import torch; print(torch.cuda.is_available())"`
+- ปัญหาอื่นๆ ดู `docs/TROUBLESHOOTING.md`
+
+---
+
 ## Jetson YOLOv8 + RealSense D435i → KUKA (UDP)
 
 Production-oriented pipeline for NVIDIA Jetson running Ubuntu 22.04 with GPU acceleration:
