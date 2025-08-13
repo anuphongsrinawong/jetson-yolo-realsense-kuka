@@ -30,6 +30,7 @@ def load_config(path: str) -> dict:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default=str(Path(__file__).resolve().parents[1] / "config" / "config.yaml"))
+    parser.add_argument("--mode", choices=["realtime", "single"], help="Run mode: realtime loop or single-shot")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -57,6 +58,8 @@ def main():
     # Detector setup
     det_cfg = config["model"]
     run_cfg = config["runtime"]
+    mode = (args.mode or run_cfg.get("mode", "realtime")).strip().lower()
+    warmup_frames = int(run_cfg.get("warmup_frames", 3))
     detector = YoloV8Detector(
         model_path=det_cfg["path"],
         device=run_cfg.get("device", "auto"),
@@ -118,8 +121,15 @@ def main():
 
     try:
         last_time = 0.0
+        warm_count = 0
         for frame in camera.frames():
-            if max_fps > 0:
+            # Warm-up for single-shot mode to let auto-exposure/streams stabilize
+            if mode == "single" and warm_count < warmup_frames:
+                warm_count += 1
+                continue
+
+            # Throttle only in realtime mode
+            if mode == "realtime" and max_fps > 0:
                 now = time.time()
                 if now - last_time < 1.0 / max_fps:
                     continue
@@ -146,6 +156,7 @@ def main():
                             det["xyz_robot"] = None
 
             # build payload once and send over enabled outputs
+            payload = None
             if udp_sender is not None or tcp_sender is not None or eki_sender is not None:
                 payload = {
                     "ts": time.time(),
@@ -184,6 +195,15 @@ def main():
                 except cv2.error:
                     logger.warning("OpenCV GUI not available; disabling preview window")
                     preview_window = False
+
+            # In single-shot mode, process once and exit
+            if mode == "single":
+                if payload is not None:
+                    try:
+                        print(json.dumps(payload))
+                    except Exception:
+                        pass
+                break
 
     except KeyboardInterrupt:
         logger.info("Interrupted by user")
